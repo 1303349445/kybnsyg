@@ -18,16 +18,13 @@
 
 ## 🕹️ 在线体验
 
-部署后可通过以下地址访问（示例）：  
-`https://你的用户名.github.io/仓库名/`
+  `https://1303349445.github.io/kybnsyg/`
 
 > 无需后端，纯静态 HTML + PixiJS CDN。
 
 ---
 
 ## 📸 预览
-
-
 
 ---
 
@@ -43,15 +40,6 @@
 
 ---
 
-## 🚀 部署到 GitHub Pages
-
-1. **克隆 / 下载本仓库**
-2. 确保根目录下有一个 `index.html`（本项目的完整代码）
-3. 推送到 GitHub 仓库（公开）
-4. 进入仓库 `Settings` → `Pages` → 将 `Branch` 设为 `main`，保存
-5. 等待 1~2 分钟，访问 `https://你的用户名.github.io/仓库名/`
-
-> 详细步骤见 [GitHub Pages 官方文档](https://docs.github.com/zh/pages)
 
 ---
 
@@ -68,8 +56,6 @@
   tech: "🤖 无代码时，大师只能掷骰子..."
 }
 ```
-
-修改后刷新页面即可生效（无需重新编译）。
 
 ---
 
