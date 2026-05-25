@@ -26,6 +26,8 @@
 
 ## 📸 预览
 
+https://github.com/1303349445/kybnsyg/blob/main/screenshot.png
+
 ---
 
 ## 🛠️ 技术栈
