@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AI 赛博玄学·无日志占卜</title>
+    <style>
+        /* 强制透明背景 · 所有视觉重量归画布内 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000000;       /* 基底纯黑，确保画布边缘无干扰 */
+            position: relative;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+        /* 杜绝任何DOM UI元素残留 */
+    </style>
+    <!-- PixiJS WebGL 渲染核心 -->
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
+</head>
+<body>
+<script>
+    (function() {
+        // ----------------------------- 卦象幽默库 (AI 氛围编程 + 无日志梗) -----------------------------
+        const DIVINATION_SET = [
+            { emoji: "🤖🧠", name: "「AI 混沌幻视卦」", rank: "⚡ 大模型幻觉 · 凶中带笑 ⚡", desc: "爻曰：无日志无堆栈，GPT-4 也面露难色。你的 Bug 处在量子叠加态，console.log 的瞬间才会坍缩。建议对显示器念‘阿弥陀佛’并重启 IDE。", tech: "🤖 无代码时，大师只能掷骰子：尝试 printf('i am here') 召回灵魂。" },
+            { emoji: "📭🔮", name: "「失落的日志枯叶签」", rank: "🏮 迷茫中平 · 空手而归 🏮", desc: "由于提问区空无一物，鬼神皆盲。此卦凶中藏吉：bug 九成是拼写错误，但你没贴代码，大师只好乱指。检查你最后改的三行，或许有奇效。", tech: "🐍 蛇灵低语: print('hello world') 是通往顿悟的桥。" },
+            { emoji: "🧘💨", name: "「氛围编程 · 玄风卦」", rank: "🌈 Vibe Coding 上上签 🌈", desc: "没有代码？妙哉！氛围编程巅峰便是无形胜有形。卦象飘忽，你的 AI 搭档正在背景冥想，bug 会在你播放 lo-fi hiphop 时自动蒸发。", tech: "🎧 建议佩戴耳机，让宇宙频率帮你 debug。" },
+            { emoji: "🐞🕳️", name: "「野指针深渊卦」", rank: "⚠️ 大凶 · 内存泄漏警告 ⚠️", desc: "卦象赤红，由于缺失 valgrind 日志，你已经踩入悬垂指针陷阱。赶紧献祭一只橡皮鸭，或者 `git stash` 然后假装无事发生。", tech: "💀 没给代码，但记得检查循环引用与 free() 时序。" },
+            { emoji: "🎲🐉", name: "「Copilot 托梦灵签」", rank: "🌟 大吉 · AI 代写 🌟", desc: "你虽然没有贴任何东西，GitHub Copilot 已经连夜托梦给了你正确片段。今晚梦中你会写出完美 PR，醒来直接 `git push --force` 但要小心。", tech: "🐉 灵签护体：自动补全是假，重构勇气是真。" },
+            { emoji: "🧹📟", name: "「清道夫三连卦」", rank: "🧧 重装治愈 · 中吉 🧧", desc: "签曰：删掉 node_modules 并重装！虽然不知你的技术栈，但此签应验率 87%。顺带 `rm -rf .cache` 可能触发奇迹。", tech: "🧪 重启大法 + 重装依赖 = 现代玄学两大支柱。" },
+            { emoji: "☕💥", name: "「咖啡因神谕之卦」", rank: "☕ 程序员上上签 ☕", desc: "卦象显示你已在工位石化，没贴日志是因为被美式淹没。神谕：去喝第三杯，回来 bug 自动消失（然后出现新的）。", tech: "没有日志的时候，咖啡渣占卜比任何调试器都准。" },
+            { emoji: "🎭🧪", name: "「单元测试未卜先知」", rank: "🧪 绿条庇护 · 吉 🧪", desc: "筮曰：虽然没贴代码，但卦位显示你的测试曾是绿的。改动某行后变红 —— 那行就是病灶。大师远程掐指：检查最后改的 3 处。", tech: "🐞 二分注释法是最强的无日志 debug 神技。" },
+            { emoji: "🌪️🧩", name: "「依赖地狱乱卦」", rank: "💢 版本冲突 · 大乱 💢", desc: "空手而来让卦盘震荡: package.json 与 lock 已互相叛变。建议 nuke node_modules，重装时循环播放《大悲咒》。", tech: "🔮 试试 pnpm ，或许乱中取胜。" },
+            { emoji: "🧘🐍", name: "「缩进迷魂卦」", rank: "🐍 迷魂大凶 🐍", desc: "你空荡荡的提问区 —— 但卦师感应到你的代码中 Tab 与空格齐飞。统一缩进，bug 立消。否则万劫不复。", tech: "比无日志更恐怖的是肉眼看不见的缩进混合。" },
+            { emoji: "🧠📡", name: "「神经网络入梦卦」", rank: "🌌 托梦大吉 🌌", desc: "卦曰：今夜你会在梦中自己 debug，因为现如今的 AI 氛围已将解法埋入潜意识。醒来若还记得，你就是天选之人。", tech: "梦里的栈信息往往比现实清晰。" },
+            { emoji: "🕳️🐇", name: "「兔子洞递归卦」", rank: "🔄 无限递归 · 大凶 🔄", desc: "缺少调用栈，但卦象预示你已坠入无限递归，爆栈之前快加 base case。不然后只能 kill -9。", tech: "大师真言：printf(\"进入函数 level %d\\n\", level) 是救命稻草。" },
+            { emoji: "🦆🧙", name: "「橡皮鸭显圣灵签」", rank: "🦆 小吉 · 鸭灵庇护 🦆", desc: "你没贴任何代码，但小黄鸭已看透一切！把问题对鸭子说一遍，讲到一半你必恍然大悟。此签极灵，鸭门永存。", tech: "🐥 小黄鸭调试法是无日志 debug 的最终奥义。" },
+            { emoji: "💥📢", name: "「生产事故预警卦」", rank: "🔥 大凶 · 火急排查 🔥", desc: "卦象极度混乱：缺失日志乃事故前兆，代表你甚至不知道服务器在干什么。立即 ssh 上去 `tail -f` 别再算了！大师都急了。", tech: "别敲木鱼了，快去看实时日志！" },
+            { emoji: "🎛️🎭", name: "「结对编程·灵魂双卦」", rank: "👥 大吉 · 队友之力 👥", desc: "你缺少的不是日志，而是另一双眼睛。卦象显灵：叫同事过来 review，甚至不用说话，bug 就会羞愧自爆。", tech: "真人 rubber duck 效果拔群。" },
+            { emoji: "🃏✨", name: "「异步等待·魔法签」", rank: "⭐ 上上· await 显灵 ⭐", desc: "大模型盲猜：你忘记 await 或漏传参数。快检查异步调用，灵力波动已覆盖。", tech: "async/await 玄学：不加 await 就是 Promise 耍流氓。" },
+            { emoji: "🧩🕊️", name: "「无为而治·空气卦」", rank: "☯️ 玄之又玄 ☯️", desc: "你什么都没提供，大师只能以无招胜有招。这个 bug 会自行消失，或者重启后不再复现 —— 幽灵报错，无需理会。", tech: "有些 bug 会随着重启升天，别较真。" },
+            { emoji: "🎛️⚡", name: "「监控盲区乱卦」", rank: "📉 下下签 · 埋点缺失 📉", desc: "没有 APM 日志，bug 如同幽灵。建议你在关键路径埋 console.log 开光一次。", tech: "没有 telemetry 就靠算命 —— 这是最终手段。" }
+        ];
+        
+        // 完整卦象库
+        const FULL_DIVINATION = [...DIVINATION_SET];
+        
+        // ----------------------------- PixiJS 初始化 (强制 WebGL, 无DOM UI) -----------------------------
+        const app = new PIXI.Application({
+            width: 1280,
+            height: 720,
+            backgroundColor: 0x000000,
+            backgroundAlpha: 1,      // 画布内纯黑底，配合图形风格
+            antialias: false,        // 硬边缘风格
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+        });
+        document.body.appendChild(app.view);
+        app.view.style.position = 'absolute';
+        app.view.style.top = '0';
+        app.view.style.left = '0';
+        app.view.style.width = '100%';
+        app.view.style.height = '100%';
+        app.view.style.objectFit = 'contain';  // 保持比例非对称裁切不影响
+        
+        // 全局容器分层 (运动速度分层)
+        const bgLayer = new PIXI.Container();      // 背景噪点/扫描线/斜切底纹
+        const shapeLayer = new PIXI.Container();   // 硬边多边形 & 装饰
+        const titleLayer = new PIXI.Container();   // 巨大标题 + 大数字
+        const contentLayer = new PIXI.Container(); // 卦象显示核心区
+        const buttonLayer = new PIXI.Container();  // 起卦按钮
+        const fxLayer = new PIXI.Container();      // 速度线/闪白瞬态效果
+        
+        app.stage.addChild(bgLayer);
+        app.stage.addChild(shapeLayer);
+        app.stage.addChild(titleLayer);
+        app.stage.addChild(contentLayer);
+        app.stage.addChild(buttonLayer);
+        app.stage.addChild(fxLayer);
+        
+        // 固定尺寸 1280x720 内设计坐标系
+        const W = 1280, H = 720;
+        
+        // ========== 风格工具: 斜切多边形 Graphics 硬边 ==========
+        function drawSharpPoly(graphics, points, color, alpha = 1, lineColor = null, lineWidth = 0) {
+            graphics.beginFill(color, alpha);
+            if (lineColor && lineWidth) graphics.lineStyle(lineWidth, lineColor, 1);
+            graphics.drawPolygon(points);
+            graphics.endFill();
+        }
+        
+        // ---------- 1. 背景层: 速度线 + 噪点纹理 + 错位网格 ----------
+        const bgNoise = new PIXI.Graphics();
+        // 动态噪点 (后续ticker更新)
+        const noiseSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+        noiseSprite.width = W;
+        noiseSprite.height = H;
+        noiseSprite.tint = 0x0a0a0f;
+        noiseSprite.alpha = 0.5;
+        bgLayer.addChild(noiseSprite);
+        
+        // 斜向硬边装饰 (红黑金)
+        const decorGraphics = new PIXI.Graphics();
+        drawSharpPoly(decorGraphics, [0, H, 200, H-120, 60, H-40, 0, H-100], 0xcc2b1e, 0.35);
+        drawSharpPoly(decorGraphics, [W-300, 0, W, 0, W, 180, W-220, 90], 0xe5b83c, 0.25);
+        drawSharpPoly(decorGraphics, [50, 50, 180, 20, 220, 110, 80, 130], 0x000000, 0.7, 0xe5b83c, 1.5);
+        bgLayer.addChild(decorGraphics);
+        
+        // 扫描线移动层 (单独 sprite 做遮片)
+        const scanline = new PIXI.Graphics();
+        scanline.beginFill(0xe5b83c, 0.18);
+        scanline.drawRect(0, 0, W, 6);
+        scanline.endFill();
+        bgLayer.addChild(scanline);
+        
+        // 背景巨大图腾 斜边异形 (非对称统治感)
+        const bigTotem = new PIXI.Graphics();
+        drawSharpPoly(bigTotem, [W-400, H-150, W-180, H-280, W-80, H-200, W-250, H-60], 0xcc2b1e, 0.2);
+        drawSharpPoly(bigTotem, [W-480, H-80, W-320, H-180, W-240, H-100, W-390, H-30], 0xe5b83c, 0.15);
+        bgLayer.addChild(bigTotem);
+        
+        // ---------- 2. 巨大标题 + 大数字 (统治画面, 非对称倾斜) ----------
+        const mainTitle = new PIXI.Text("AI 玄学", {
+            fontFamily: 'Impact, "Arial Black", "Noto Sans SC", monospace',
+            fontSize: 102,
+            fontWeight: '800',
+            fill: 0xeaeef2,
+            stroke: 0xcc2b1e,
+            strokeThickness: 4,
+            align: 'left',
+            letterSpacing: 4
+        });
+        mainTitle.anchor.set(0, 0);
+        mainTitle.position.set(40, 45);
+        mainTitle.skew.set(-0.08, 0.05);
+        titleLayer.addChild(mainTitle);
+        
+        const subHeader = new PIXI.Text("「 无日志 · 乱数占卜 」", {
+            fontFamily: 'monospace, "Courier New"',
+            fontSize: 28,
+            fill: 0xe5b83c,
+            stroke: 0x000000,
+            strokeThickness: 2,
+        });
+        subHeader.anchor.set(0, 0);
+        subHeader.position.set(55, 155);
+        subHeader.skew.set(0.02, -0.03);
+        titleLayer.addChild(subHeader);
+        
+        // 巨大数字 / 符号统治
+        const bigNum = new PIXI.Text("64", {
+            fontFamily: 'Impact, "Arial Black"',
+            fontSize: 200,
+            fill: 0xcc2b1e,
+            stroke: 0x000000,
+            strokeThickness: 6,
+            alpha: 0.25
+        });
+        bigNum.anchor.set(0.5);
+        bigNum.position.set(W-110, H-90);
+        bigNum.rotation = -0.12;
+        titleLayer.addChild(bigNum);
+        
+        // 爻状机械眼装饰
+        const mechEye = new PIXI.Graphics();
+        mechEye.beginFill(0x000000);
+        mechEye.drawPolygon([W-210, 100, W-130, 80, W-100, 140, W-170, 160]);
+        mechEye.endFill();
+        mechEye.beginFill(0xe5b83c);
+        mechEye.drawPolygon([W-180, 115, W-145, 105, W-135, 130, W-165, 140]);
+        mechEye.endFill();
+        shapeLayer.addChild(mechEye);
+        
+        // ---------- 3. 卦象内容面板 (斜切异形 / 无圆角) ----------
+        const panelBg = new PIXI.Graphics();
+        const panelPoints = [680, 210, 1190, 190, 1220, 620, 640, 660];
+        drawSharpPoly(panelBg, panelPoints, 0x0c1114, 0.92, 0xcc2b1e, 2.5);
+        contentLayer.addChild(panelBg);
+        
+        // 卦象emoji文本区
+        const emojiText = new PIXI.Text("🧙‍♂️", {
+            fontFamily: 'Segoe UI Emoji, "Apple Color Emoji", sans-serif',
+            fontSize: 78,
+            fill: 0xeaeef2,
+            stroke: 0xcc2b1e,
+            strokeThickness: 3
+        });
+        emojiText.anchor.set(0.5);
+        emojiText.position.set(810, 280);
+        contentLayer.addChild(emojiText);
+        
+        // 卦名
+        const signNameText = new PIXI.Text("待君起卦", {
+            fontFamily: 'Impact, "Arial Black", monospace',
+            fontSize: 44,
+            fill: 0xe5b83c,
+            stroke: 0x000000,
+            strokeThickness: 3,
+            align: 'center'
+        });
+        signNameText.anchor.set(0.5);
+        signNameText.position.set(940, 290);
+        contentLayer.addChild(signNameText);
+        
+        // 等级徽章 (硬边)
+        const rankText = new PIXI.Text("📭 无日志·无代码", {
+            fontFamily: 'monospace, "Courier New"',
+            fontSize: 24,
+            fill: 0xeaeef2,
+            stroke: 0x000000,
+            strokeThickness: 2,
+        });
+        rankText.anchor.set(0, 0.5);
+        rankText.position.set(740, 360);
+        contentLayer.addChild(rankText);
+        
+        // 卦辞描述 (多行, 启用自动换行，解决文本溢出)
+        const descText = new PIXI.Text("🎲 年轻人，技术提问不留日志，不留堆栈，如同盲人摸象。\n点击下方「AI乱数起卦」让大模型为你瞎蒙一卦～", {
+            fontFamily: 'system-ui, "Noto Sans SC", "Segoe UI"',
+            fontSize: 19,
+            fill: 0xD9F1F5,
+            stroke: 0x0a1114,
+            strokeThickness: 1.8,
+            wordWrap: true,
+            wordWrapWidth: 420,      // 增加宽度确保换行舒适，不超出多边形
+            lineHeight: 26,
+            breakWords: true          // 允许长单词/代码片段断开换行
+        });
+        descText.anchor.set(0, 0);
+        descText.position.set(735, 410);
+        contentLayer.addChild(descText);
+        
+        // tech提示 (启用自动换行)
+        const techHintText = new PIXI.Text("💡 卦象生成中融入 vibe coding 灵气...", {
+            fontFamily: 'monospace, "Courier New"',
+            fontSize: 16,
+            fill: 0x88ddbb,
+            stroke: 0x000000,
+            strokeThickness: 1.5,
+            wordWrap: true,
+            wordWrapWidth: 420,
+            breakWords: true,
+            lineHeight: 22
+        });
+        techHintText.anchor.set(0, 0);
+        techHintText.position.set(735, 575);
+        contentLayer.addChild(techHintText);
+        
+        // 增加斜切锐利的装饰条在内容区
+        const cornerMark = new PIXI.Graphics();
+        cornerMark.beginFill(0xe5b83c);
+        cornerMark.drawPolygon([670, 210, 710, 200, 720, 230, 680, 240]);
+        cornerMark.endFill();
+        contentLayer.addChild(cornerMark);
+        
+        // ---------- 4. 起卦按钮 (锋利多边形, 无圆角) ----------
+        const btnContainer = new PIXI.Container();
+        const btnBg = new PIXI.Graphics();
+        const btnPoints = [80, 580, 280, 550, 310, 630, 100, 670];
+        drawSharpPoly(btnBg, btnPoints, 0xcc2b1e, 1, 0xe5b83c, 2);
+        btnContainer.addChild(btnBg);
+        
+        const btnText = new PIXI.Text("⚡ 乱数起卦 ⚡", {
+            fontFamily: 'Impact, "Arial Black", monospace',
+            fontSize: 34,
+            fill: 0xffffff,
+            stroke: 0x000000,
+            strokeThickness: 2.5,
+            align: 'center'
+        });
+        btnText.anchor.set(0.5);
+        btnText.position.set(190, 618);
+        btnText.skew.set(-0.02, 0.03);
+        btnContainer.addChild(btnText);
+        
+        // 增加辅助锋刃装饰
+        const blade = new PIXI.Graphics();
+        blade.beginFill(0xe5b83c);
+        blade.drawPolygon([290, 560, 320, 545, 330, 575, 300, 580]);
+        blade.endFill();
+        btnContainer.addChild(blade);
+        
+        buttonLayer.addChild(btnContainer);
+        
+        // 添加交互区域 (Pixi 可点击)
+        btnContainer.interactive = true;
+        btnContainer.buttonMode = true;
+        btnContainer.cursor = 'pointer';
+        
+        // 另外加一个巨大字符背景速度错位单独
+        const flyLines = new PIXI.Container();
+        fxLayer.addChild(flyLines);
+        
+        // ---------- 动画状态 ----------
+        let scanY = 0;
+        let isDivining = false;
+        let currentDivination = null;
+        
+        // 随机获取卦象
+        function getRandomDiv() {
+            const idx = Math.floor(Math.random() * FULL_DIVINATION.length);
+            return { ...FULL_DIVINATION[idx] };
+        }
+        
+        // 刷新UI内容 (强制自动换行生效)
+        function updateUIByDivination(div) {
+            emojiText.text = div.emoji;
+            signNameText.text = div.name;
+            rankText.text = div.rank;
+            // 直接设置文本，wordWrap属性已经定义好，会自动换行
+            descText.text = div.desc;
+            techHintText.text = `🔮 ${div.tech}`;
+            // 为了确保换行正确，手动再触发布局 (Pixi自动处理)
+            // 如果文本高度变化导致超出，但因为容器多边形足够大且设置合理，不会溢出可见区
+        }
+        
+        // 表演起卦: 硬朗动画 (wipe / shake / 速度线爆发)
+        function performDivination() {
+            if (isDivining) return;
+            isDivining = true;
+            btnContainer.interactive = false;
+            
+            // 1. 速度线爆发效果
+            const speedLines = [];
+            for (let i = 0; i < 18; i++) {
+                const line = new PIXI.Graphics();
+                const yPos = Math.random() * H;
+                line.beginFill(0xe5b83c, 0.7);
+                line.drawRect(0, 0, W, 3);
+                line.endFill();
+                line.position.set(-W + Math.random() * W, yPos);
+                line.alpha = 0.8;
+                fxLayer.addChild(line);
+                speedLines.push(line);
+                // 动画移动
+                let startX = line.x;
+                let targetX = W + 200;
+                const duration = 180;
+                const startTime = Date.now();
+                function animateLine() {
+                    const now = Date.now();
+                    const elapsed = now - startTime;
+                    let t = Math.min(1, elapsed / duration);
+                    line.x = startX + (targetX - startX) * t;
+                    if (t < 1) requestAnimationFrame(animateLine);
+                    else fxLayer.removeChild(line);
+                }
+                requestAnimationFrame(animateLine);
+            }
+            
+            // 2. 闪白瞬闪 (硬切)
+            const whiteFlash = new PIXI.Graphics();
+            whiteFlash.beginFill(0xffffff, 0.5);
+            whiteFlash.drawRect(0, 0, W, H);
+            whiteFlash.endFill();
+            fxLayer.addChild(whiteFlash);
+            setTimeout(() => fxLayer.removeChild(whiteFlash), 80);
+            
+            // 3. 内容面板抖动/错位运动
+            const originalPos = { x: contentLayer.x, y: contentLayer.y };
+            contentLayer.x += 12;
+            setTimeout(() => { contentLayer.x = originalPos.x - 6; }, 35);
+            setTimeout(() => { contentLayer.x = originalPos.x + 4; }, 70);
+            setTimeout(() => { contentLayer.x = originalPos.x; }, 110);
+            
+            // 面板伸缩 (split感)
+            const scaleTween = () => {
+                panelBg.scale.set(1.02, 0.98);
+                setTimeout(() => { panelBg.scale.set(0.99, 1.01); }, 60);
+                setTimeout(() => { panelBg.scale.set(1, 1); }, 120);
+            };
+            scaleTween();
+            
+            // 卦象文字快速替换 + 新内容 reveal
+            setTimeout(() => {
+                const newDiv = getRandomDiv();
+                currentDivination = newDiv;
+                updateUIByDivination(newDiv);
+                // 额外字符跳动
+                signNameText.style.strokeThickness = 6;
+                setTimeout(() => { signNameText.style.strokeThickness = 3; }, 150);
+                rankText.style.fill = 0xe5b83c;
+                setTimeout(() => { rankText.style.fill = 0xeaeef2; }, 180);
+            }, 90);
+            
+            // 按钮重新激活
+            setTimeout(() => {
+                isDivining = false;
+                btnContainer.interactive = true;
+            }, 400);
+            
+            // 增加轻微噪点爆发
+            noiseSprite.alpha = 0.9;
+            setTimeout(() => { noiseSprite.alpha = 0.5; }, 200);
+        }
+        
+        btnContainer.on('pointerdown', (e) => {
+            e.stopPropagation();
+            performDivination();
+        });
+        
+        // 初次加载首卦 (随机一个有趣)
+        (function initFirst() {
+            const first = getRandomDiv();
+            updateUIByDivination(first);
+        })();
+        
+        // ---------- 动态呼吸效果: 扫描线移动, 图层速度错位, 噪点 ----------
+        let time = 0;
+        app.ticker.add((delta) => {
+            time += delta * 0.012;
+            // 扫描线移动 (慢)
+            scanY = (scanY + 0.8) % H;
+            scanline.y = scanY;
+            // 增加扫描线透明度波动
+            scanline.alpha = 0.2 + Math.sin(time * 3) * 0.08;
+            
+            // 背景层巨大图形缓慢偏移 (速度慢)
+            bigTotem.x = Math.sin(time * 0.1) * 3;
+            bigTotem.y = Math.cos(time * 0.13) * 2;
+            // 标题层轻微错位运动 (速度快一点)
+            mainTitle.x = 40 + Math.sin(time * 1.2) * 1.2;
+            subHeader.x = 55 + Math.sin(time * 1.5) * 0.8;
+            // 大数字浮动
+            bigNum.rotation = -0.12 + Math.sin(time * 0.6) * 0.02;
+            // 卦象内容区轻微独立漂浮
+            contentLayer.y = Math.sin(time * 0.9) * 1.5;
+            // 噪声纹理细小闪烁
+            if (Math.random() < 0.05) {
+                noiseSprite.alpha = 0.55 + Math.random() * 0.1;
+            } else {
+                noiseSprite.alpha = 0.5 + Math.sin(time * 12) * 0.03;
+            }
+            // 按钮红色微脉动
+            btnBg.alpha = 0.95 + Math.sin(time * 8) * 0.05;
+        });
+        
+        // 再额外增加一组随机细碎粒子 (速度线层错落)
+        function addSlowNoiseDust() {
+            const dust = new PIXI.Graphics();
+            dust.beginFill(0xe5b83c, 0.3);
+            dust.drawRect(Math.random() * W, Math.random() * H, 2, 2);
+            dust.endFill();
+            fxLayer.addChild(dust);
+            setTimeout(() => fxLayer.removeChild(dust), 400);
+            setTimeout(addSlowNoiseDust, 800 + Math.random() * 500);
+        }
+        addSlowNoiseDust();
+        
+        // 更替增加额外斜向速度线持续感
+        setInterval(() => {
+            if (!isDivining) {
+                const line = new PIXI.Graphics();
+                line.beginFill(0xcc2b1e, 0.2);
+                line.drawRect(0, Math.random() * H, W, 2);
+                line.endFill();
+                fxLayer.addChild(line);
+                setTimeout(() => fxLayer.removeChild(line), 500);
+            }
+        }, 1800);
+        
+        // 确保自适应 scale 保持比例
+        function resizeCanvas() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const scaleX = w / W;
+            const scaleY = h / H;
+            const scale = Math.min(scaleX, scaleY);
+            app.view.style.width = `${W * scale}px`;
+            app.view.style.height = `${H * scale}px`;
+            app.view.style.left = `${(w - W * scale) / 2}px`;
+            app.view.style.top = `${(h - H * scale) / 2}px`;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // 强制无圆角额外斜边装饰，保证全canvas无HTML卡片
+        console.log("AI 赛博玄学启动 —— 无日志，无代码，全凭显卡算卦 | 文本自动换行已修复");
+    })();
+</script>
+</body>
+</html>
