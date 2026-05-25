@@ -18,7 +18,7 @@
 
 ## 🕹️ 在线体验
 
-  `https://1303349445.github.io/kybnsyg/`
+  https://1303349445.github.io/kybnsyg/
 
 > 无需后端，纯静态 HTML + PixiJS CDN。
 
